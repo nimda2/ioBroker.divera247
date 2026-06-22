@@ -57,11 +57,11 @@
 					"help": { "en": "Comma separated group IDs", "de": "Kommagetrennte Gruppen-IDs" },
 					"sm": 12, "md": 6
 				},
-				"resetOnAlarmEnd": {
+				"enableResponses": {
 					"type": "checkbox",
 					"newLine": true,
-					"label": { "en": "Reset alarm data points when the alarm ends", "de": "Alarm-Datenpunkte beim Alarmende zurücksetzen" },
-					"help": { "en": "When no alarm is active, also reset title/text/address/... to empty (not only the alarm flag)", "de": "Wenn kein Alarm aktiv ist, auch Stichwort/Text/Adresse/... leeren (nicht nur das Alarm-Flag)" },
+					"label": { "en": "Evaluate alarm responses", "de": "Alarm-Rückmeldungen auswerten" },
+					"help": { "en": "Counts how many members chose each status during an active alarm (responses.*)", "de": "Zählt, wie viele Mitglieder bei einem aktiven Alarm welchen Status gewählt haben (responses.*)" },
 					"sm": 12
 				}
 			}
