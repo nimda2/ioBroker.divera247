@@ -4,14 +4,16 @@ const utils = require('@iobroker/adapter-core');
 const axios = require('axios');
 const adapterName = require('./package.json').name.split('.').pop();
 
-const userData = [];
-userData['diveraAPIToken'] = '';
-userData['diveraMemberships'] = [];
+const userData = {
+	diveraAPIToken: '',
+	diveraMemberships: [],
+};
 
-const internalAlarmData = [];
-internalAlarmData['alarmID'] = 0;
-internalAlarmData['alarmClosed'] = true;
-internalAlarmData['lastAlarmUpdate'] = 0;
+const internalAlarmData = {
+	alarmID: 0,
+	alarmClosed: true,
+	lastAlarmUpdate: 0,
+};
 
 
 const pollIntervallSeconds = 15;
@@ -147,8 +149,8 @@ class Divera247 extends utils.Adapter {
 		this.setState('info.connection', false, true);
 
 		// Generating DataPoints for this adapter
-		dataPoints.forEach( (elm) => {
-			this.setObjectNotExistsAsync(elm.id, {
+		for (const elm of dataPoints) {
+			await this.setObjectNotExistsAsync(elm.id, {
 				type: 'state',
 				common: {
 					name: elm.name,
@@ -159,7 +161,7 @@ class Divera247 extends utils.Adapter {
 				},
 				native: {},
 			});
-		});
+		}
 
 		////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		const diveraLoginName = this.config.diveraUserLogin;
@@ -238,7 +240,9 @@ class Divera247 extends utils.Adapter {
 				if (response.status == 200 && responseBody.success) {
 					this.log.debug('Connected to API');
 					userData.diveraAPIToken = responseBody.data.user.access_token;
-					userData.diveraMemberships = responseBody.data.ucr;
+					// 'ucr' may be returned as an array or as an object keyed by id - normalize to an array
+					const ucr = responseBody.data.ucr;
+					userData.diveraMemberships = Array.isArray(ucr) ? ucr : Object.values(ucr || {});
 					this.log.debug('Divera Memberships: ' + JSON.stringify(userData.diveraMemberships));
 					return true;
 				} else {
@@ -288,7 +292,7 @@ class Divera247 extends utils.Adapter {
 				// @ts-ignore
 				this.getState('info.connection',  (err, state) => {
 					// @ts-ignore
-					if (!state.val) {
+					if (state && !state.val) {
 						this.setState('info.connection', true, true);
 						this.log.debug('Reconnected to API');
 					}
@@ -298,8 +302,16 @@ class Divera247 extends utils.Adapter {
 				this.setState('lastUpdate', { val: Date.now(), ack: true });
 
 				// Setting the alarm specific states when a new alarm is active and addressed to the configured divera user id
-				if (content.success && Object.keys(content.data.items).length > 0) {
-					const alarmContent = content.data.items[content.data.sorting[0]];
+				if (content.success && content.data && content.data.items && Array.isArray(content.data.sorting) && content.data.sorting.length > 0) {
+					// 'sorting' is ascending (oldest first), so the most recent alarm is the last entry
+					const latestAlarmId = content.data.sorting[content.data.sorting.length - 1];
+					const alarmContent = content.data.items[latestAlarmId];
+					if (!alarmContent) {
+						this.log.debug('No alarm content found for latest alarm id ' + latestAlarmId);
+						return;
+					}
+					// The Divera v2 API spells the field 'ucr_adressed' (single 'd'); older v1 endpoints used 'ucr_addressed'
+					const alarmAddressedUsers = alarmContent.ucr_addressed || alarmContent.ucr_adressed || [];
 					if ((internalAlarmData.alarmID != alarmContent.id && !alarmContent.closed) || (internalAlarmData.alarmID == alarmContent.id && internalAlarmData.lastAlarmUpdate < alarmContent.ts_update && !alarmContent.closed)) {
 						this.log.debug('New or updated alarm!');
 						this.log.debug('Received data from Divera-API: ' + JSON.stringify(content));
@@ -313,7 +325,7 @@ class Divera247 extends utils.Adapter {
 						if (diveraFilterOnlyAlarmsForMyUser) {
 							for (const elm of userData.diveraMemberships) {
 								this.log.debug('checking if my user-id \'' + elm.id + '\' for \'' + elm.name + '\' is alarmed');
-								if (alarmContent.ucr_addressed.includes(parseInt(elm.id, 10))) {
+								if (alarmAddressedUsers.includes(parseInt(elm.id, 10))) {
 									this.setAdapterStates(alarmContent);
 									this.log.debug('my user is alarmed - states refreshed for the current alarm');
 									break;
@@ -324,7 +336,7 @@ class Divera247 extends utils.Adapter {
 						} else if (diveraUserIDs.length > 0 && diveraUserIDs[0] != '') {
 							for (const elm of diveraUserIDs) {
 								this.log.debug('checking if user \'' + elm + '\' is alarmed');
-								if (alarmContent.ucr_addressed.includes(parseInt(elm, 10))) {
+								if (alarmAddressedUsers.includes(parseInt(elm, 10))) {
 									this.setAdapterStates(alarmContent);
 									this.log.debug('user is alarmed - states refreshed for the current alarm');
 									break;
@@ -335,7 +347,7 @@ class Divera247 extends utils.Adapter {
 						} else if (diveraUserGroups.length > 0 && diveraUserGroups[0] != '') {
 							for (const elm of diveraUserGroups) {
 								this.log.debug('checking if group \'' + elm + '\' is alarmed');
-								if (alarmContent.group.includes(parseInt(elm, 10))) {
+								if (Array.isArray(alarmContent.group) && alarmContent.group.includes(parseInt(elm, 10))) {
 									this.setAdapterStates(alarmContent);
 									this.log.debug('group is alarmed - states refreshed for the current alarm');
 									break;
@@ -387,9 +399,14 @@ class Divera247 extends utils.Adapter {
 
 	// Function to set satates
 	/**
-	 * @param {{ title: string; text: string; foreign_id: number; id: number; address: string; lat: number; lng: number; date: number; priority: boolean; ucr_addressed: string[]; group: string[]; vehicle: string[]; }} alarmData
+	 * @param {{ title: string; text: string; foreign_id: number; id: number; address: string; lat: number; lng: number; date: number; priority: boolean; ucr_addressed?: number[]; ucr_adressed?: number[]; group: number[]; vehicle: string[]; }} alarmData
 	 */
 	setAdapterStates(alarmData) {
+		// The Divera v2 API spells the field 'ucr_adressed' (single 'd'); older v1 endpoints used 'ucr_addressed'
+		const addressedUsers = alarmData.ucr_addressed || alarmData.ucr_adressed || [];
+		const addressedGroups = Array.isArray(alarmData.group) ? alarmData.group : [];
+		const addressedVehicles = Array.isArray(alarmData.vehicle) ? alarmData.vehicle : [];
+
 		this.setState('title', { val: alarmData.title, ack: true });
 		this.setState('text', { val: alarmData.text, ack: true });
 		this.setState('foreign_id', { val: Number(alarmData.foreign_id), ack: true });
@@ -399,9 +416,9 @@ class Divera247 extends utils.Adapter {
 		this.setState('lng', { val: Number(alarmData.lng), ack: true });
 		this.setState('date', { val: Number(alarmData.date)*1000, ack: true });
 		this.setState('priority', { val: alarmData.priority, ack: true });
-		this.setState('addressed_users', { val: alarmData.ucr_addressed.join(), ack: true });
-		this.setState('addressed_groups', { val: alarmData.group.join(), ack: true });
-		this.setState('addressed_vehicle', { val: alarmData.vehicle.join(), ack: true });
+		this.setState('addressed_users', { val: addressedUsers.join(), ack: true });
+		this.setState('addressed_groups', { val: addressedGroups.join(), ack: true });
+		this.setState('addressed_vehicle', { val: addressedVehicles.join(), ack: true });
 		this.setState('alarm', { val: true, ack: true });
 	}
 

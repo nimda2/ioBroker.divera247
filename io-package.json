@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "news": {
+      "0.2.1": {
+        "en": "Fixed login config, corrected API field 'ucr_adressed', latest alarm selection and several crashes",
+        "de": "Login-Konfiguration repariert, API-Feld 'ucr_adressed' korrigiert, Auswahl des aktuellsten Alarms und mehrere Abstürze behoben"
+      },
       "0.2.0": {
         "en": "Complete renewal of the adapter",
         "de": "Generelle Erneuerung des Adapters"
@@ -100,16 +104,23 @@
     "materialize": true,
     "dependencies": [
       {
-        "js-controller": ">=2.0.0"
+        "js-controller": ">=3.0.0"
       }
     ]
   },
   "native": {
-    "diveraAccessKey": "",
+    "diveraUserLogin": "",
+    "diveraLoginPassword": "",
+    "explizitUserAlarms": false,
     "diveraUserId": "",
-    "diveraAlarmGroup": "",
-    "pollIntervall": 30
+    "diveraAlarmGroup": ""
   },
+  "encryptedNative": [
+    "diveraLoginPassword"
+  ],
+  "protectedNative": [
+    "diveraLoginPassword"
+  ],
   "objects": [],
   "instanceObjects": [
     {

@@ -21,7 +21,7 @@
   ],
   "_resolved": "https://registry.npmjs.org/iobroker.divera247/-/iobroker.divera247-0.2.0.tgz",
   "_shasum": "1d91da0d747552853eadacdf740dc33818456a43",
-  "_spec": "iobroker.divera247@0.2.0",
+  "_spec": "iobroker.divera247@0.2.1",
   "_where": "/opt/iobroker",
   "author": {
     "name": "tknpl",
@@ -66,6 +66,7 @@
   "license": "MIT",
   "main": "main.js",
   "name": "iobroker.divera247",
+  "version": "0.2.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TKnpl/ioBroker.divera247.git"
@@ -78,6 +79,5 @@
     "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
     "test:package": "mocha test/package --exit",
     "test:unit": "mocha test/unit --exit"
-  },
-  "version": "0.2.0"
+  }
 }
