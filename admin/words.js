@@ -122,6 +122,14 @@ systemDictionary = {
 		"pl": "Alarm tylko dla następujących grup alarmowych Divera",
 		"zh-cn": "仅针对以下Divera警报组发出警报"
 	},
+	"Poll interval (seconds)": {
+		"en": "Poll interval (seconds)",
+		"de": "Abfrageintervall (Sekunden)"
+	},
+	"How often the Divera API is queried (minimum 10 seconds)": {
+		"en": "How often the Divera API is queried (minimum 10 seconds)",
+		"de": "Wie oft die Divera-API abgefragt wird (mindestens 10 Sekunden)"
+	},
 	"Personnel availability": {
 		"en": "Personnel availability",
 		"de": "Personalverfügbarkeit"

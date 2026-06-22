@@ -17,7 +17,7 @@ const internalAlarmData = {
 };
 
 
-const pollIntervallSeconds = 15;
+const pollIntervalMinimumSeconds = 10;
 
 const dataPoints = [{
 	'id': 'alarm',
@@ -142,6 +142,7 @@ class Divera247 extends utils.Adapter {
 
 		this.refreshStateTimeout = null;
 		this.availabilityWarned = false;
+		this.pollIntervalSeconds = 30;
 
 		this.on('ready', this.onReady.bind(this));
 		this.on('unload', this.onUnload.bind(this));
@@ -181,8 +182,15 @@ class Divera247 extends utils.Adapter {
 		// Check if all values of diveraUserGroups are valid
 		const userGroupInputIsValid = this.uiFilterIsValid(diveraUserGroups)[0];
 
+		// Poll interval in seconds (configurable like in 0.1.2), clamped to a sane minimum
+		let pollIntervalSeconds = parseInt(String(this.config.pollInterval), 10);
+		if (isNaN(pollIntervalSeconds) || pollIntervalSeconds < pollIntervalMinimumSeconds) {
+			pollIntervalSeconds = pollIntervalMinimumSeconds;
+		}
+		this.pollIntervalSeconds = pollIntervalSeconds;
+
 		// Startup logic from here. Login and API calls
-		if (diveraLoginName && diveraLoginPassword && pollIntervallSeconds && userIDInputIsValid && userGroupInputIsValid) {
+		if (diveraLoginName && diveraLoginPassword && this.pollIntervalSeconds && userIDInputIsValid && userGroupInputIsValid) {
 			if (await this.checkConnectionToApi(diveraLoginName, diveraLoginPassword)) {
 				// Connected to API
 				this.setState('info.connection', true, true);
@@ -289,7 +297,7 @@ class Divera247 extends utils.Adapter {
 			url: '/api/v2/pull/all?accesskey=' + diveraAccessKey,
 			responseType: 'json'
 		}).then(
-			(response) => {
+			async (response) => {
 				const content = response.data;
 
 				// If last request failed set info.connection true again
@@ -381,6 +389,11 @@ class Divera247 extends utils.Adapter {
 				} else {
 					this.log.warn('api content retrieval not successful');
 				}
+
+				// Optional: evaluate the personnel availability from the same pull/all response
+				if (content.success && this.config.enableAvailability) {
+					await this.processAvailability(content.data);
+				}
 			}
 		).catch(
 			(error) => {
@@ -405,16 +418,12 @@ class Divera247 extends utils.Adapter {
 			}
 		);
 
-		// Optional: evaluate the personnel availability (monitor data) into the availability.* tree
-		if (this.config.enableAvailability) {
-			await this.updateAvailability(diveraAccessKey);
-		}
 
 		// Timeout and self call handling
 		this.refreshStateTimeout = this.refreshStateTimeout || setTimeout(() => {
 			this.refreshStateTimeout = null;
 			this.getDataFromApiAndSetObjects(diveraAccessKey, diveraFilterOnlyAlarmsForMyUser, diveraUserIDs, diveraUserGroups);
-		}, pollIntervallSeconds * 1000);
+		}, this.pollIntervalSeconds * 1000);
 	}
 
 	// Function to set satates
@@ -512,95 +521,79 @@ class Divera247 extends utils.Adapter {
 	/**
 	 *	Fetch the unit data and count members per status and selected qualification into the availability.* tree
 	 *
-	 * @param {string} diveraAccessKey
+	 * @param {object} data
 	 */
-	async updateAvailability(diveraAccessKey) {
-		// @ts-ignore
-		await axios({
-			method: 'get',
-			baseURL: 'https://www.divera247.com/',
-			url: '/api/v2/pull/all?accesskey=' + diveraAccessKey,
-			responseType: 'json'
-		}).then(async (response) => {
-			const content = response.data;
-			if (!content || !content.success || !content.data) {
-				this.log.warn('availability: pull/all response not successful');
-				return;
-			}
-			const cluster = content.data.cluster || {};
-			const statuses = cluster.status || {};
-			const statusSorting = (Array.isArray(cluster.statussorting) && cluster.statussorting.length) ? cluster.statussorting : Object.keys(statuses);
-			const qualDefs = cluster.qualification || {};
-			const consumer = cluster.consumer || {};
+	async processAvailability(data) {
+		if (!data) {
+			return;
+		}
+		const cluster = data.cluster || {};
+		const statuses = cluster.status || {};
+		const statusSorting = (Array.isArray(cluster.statussorting) && cluster.statussorting.length) ? cluster.statussorting : Object.keys(statuses);
+		const qualDefs = cluster.qualification || {};
+		const consumer = cluster.consumer || {};
 
-			const memberStatus = this.extractMemberStatusMap(content.data.monitor, consumer);
-			if (!memberStatus) {
-				if (!this.availabilityWarned) {
-					this.log.warn('availability: no per-member monitor data available - does the used accesskey have monitor/management rights?');
-					this.availabilityWarned = true;
-				}
-				return;
+		const memberStatus = this.extractMemberStatusMap(data.monitor, consumer);
+		if (!memberStatus) {
+			if (!this.availabilityWarned) {
+				this.log.warn('availability: no per-member monitor data available - does the used accesskey have monitor/management rights?');
+				this.availabilityWarned = true;
 			}
-			this.availabilityWarned = false;
+			return;
+		}
+		this.availabilityWarned = false;
 
-			const selected = this.resolveQualifications(this.config.availabilityQualifications, qualDefs);
+		const selected = this.resolveQualifications(this.config.availabilityQualifications, qualDefs);
 
-			// Count members per status (.all) and per selected qualification
-			const counts = {};
-			for (const sid of Object.keys(statuses)) {
-				counts[sid] = { all: 0, quals: {} };
-				for (const sel of selected) counts[sid].quals[sel.id] = 0;
+		// Count members per status (.all) and per selected qualification
+		const counts = {};
+		for (const sid of Object.keys(statuses)) {
+			counts[sid] = { all: 0, quals: {} };
+			for (const sel of selected) counts[sid].quals[sel.id] = 0;
+		}
+		for (const mid of Object.keys(consumer)) {
+			const entry = memberStatus[mid];
+			const st = entry && entry.status;
+			if (st == null || !counts[st]) continue;
+			counts[st].all++;
+			const memberQuals = consumer[mid].qualifications || [];
+			for (const sel of selected) {
+				if (memberQuals.includes(sel.id)) counts[st].quals[sel.id]++;
 			}
-			for (const mid of Object.keys(consumer)) {
-				const entry = memberStatus[mid];
-				const st = entry && entry.status;
-				if (st == null || !counts[st]) continue;
-				counts[st].all++;
-				const memberQuals = consumer[mid].qualifications || [];
-				for (const sel of selected) {
-					if (memberQuals.includes(sel.id)) counts[st].quals[sel.id]++;
-				}
-			}
+		}
 
-			// Create / update the objects
-			await this.setObjectNotExistsAsync('availability', {
+		// Create / update the objects
+		await this.setObjectNotExistsAsync('availability', {
+			type: 'channel',
+			common: { name: 'Personalverfügbarkeit' },
+			native: {}
+		});
+		for (const sid of statusSorting) {
+			const st = statuses[sid];
+			if (!st) continue;
+			const sKey = this.sanitizeId(st.name) || ('status_' + sid);
+			const base = 'availability.' + sKey;
+			await this.setObjectNotExistsAsync(base, {
 				type: 'channel',
-				common: { name: 'Personalverfügbarkeit' },
+				common: { name: st.name },
 				native: {}
 			});
-			for (const sid of statusSorting) {
-				const st = statuses[sid];
-				if (!st) continue;
-				const sKey = this.sanitizeId(st.name) || ('status_' + sid);
-				const base = 'availability.' + sKey;
-				await this.setObjectNotExistsAsync(base, {
-					type: 'channel',
-					common: { name: st.name },
-					native: {}
-				});
-				await this.setObjectNotExistsAsync(base + '.all', {
+			await this.setObjectNotExistsAsync(base + '.all', {
+				type: 'state',
+				common: { name: 'Gesamt (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
+				native: {}
+			});
+			this.setState(base + '.all', { val: counts[sid].all, ack: true });
+			for (const sel of selected) {
+				await this.setObjectNotExistsAsync(base + '.' + sel.key, {
 					type: 'state',
-					common: { name: 'Gesamt (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
+					common: { name: sel.name + ' (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
 					native: {}
 				});
-				this.setState(base + '.all', { val: counts[sid].all, ack: true });
-				for (const sel of selected) {
-					await this.setObjectNotExistsAsync(base + '.' + sel.key, {
-						type: 'state',
-						common: { name: sel.name + ' (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
-						native: {}
-					});
-					this.setState(base + '.' + sel.key, { val: counts[sid].quals[sel.id], ack: true });
-				}
+				this.setState(base + '.' + sel.key, { val: counts[sid].quals[sel.id], ack: true });
 			}
-			this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
-		}).catch((error) => {
-			if (error.response) {
-				this.log.warn('availability: received error ' + error.response.status + ' from pull/all');
-			} else {
-				this.log.warn('availability: ' + error.message);
-			}
-		});
+		}
+		this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
 	}
 
 	// Is called when adapter shuts down

@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "news": {
+      "0.3.1": {
+        "en": "Personnel availability now uses the same single pull/all request as the alarms; the poll interval (seconds) is configurable again like in 0.1.2",
+        "de": "Personalverfügbarkeit nutzt jetzt denselben einzelnen pull/all-Abruf wie die Alarme; das Abfrageintervall (Sekunden) ist wieder konfigurierbar wie in 0.1.2"
+      },
       "0.3.0": {
         "en": "Alarms are now read from /api/v2/pull/all (fixes 403 'Login not possible' on FREE accounts); added optional personnel availability evaluation (availability.*)",
         "de": "Alarme werden jetzt über /api/v2/pull/all gelesen (behebt 403 'Login not possible' bei FREE-Konten); optionale Personalverfügbarkeit (availability.*) hinzugefügt"
@@ -118,6 +122,7 @@
     "explizitUserAlarms": false,
     "diveraUserId": "",
     "diveraAlarmGroup": "",
+    "pollInterval": 30,
     "enableAvailability": false,
     "availabilityQualifications": ""
   },

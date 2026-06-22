@@ -66,7 +66,7 @@
   "license": "MIT",
   "main": "main.js",
   "name": "iobroker.divera247",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TKnpl/ioBroker.divera247.git"
