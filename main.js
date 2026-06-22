@@ -167,9 +167,7 @@ class Divera247 extends utils.Adapter {
 		}
 
 		// Initialise the states at startup so they are never null (booleans default to false), like in 0.1.2
-		for (const elm of dataPoints) {
-			await this.setState(elm.id, { val: (elm.type === 'boolean') ? false : null, ack: true });
-		}
+		await this.resetAlarmStates();
 
 		////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		const diveraLoginName = this.config.diveraUserLogin;
@@ -379,17 +377,17 @@ class Divera247 extends utils.Adapter {
 							this.log.debug('states refreshed for the current alarm');
 						}
 					} else if (internalAlarmData.alarmID == alarmContent.id && alarmContent.closed && !internalAlarmData.alarmClosed) {
-						this.setState('alarm', { val: !alarmContent.closed, ack: true });
-						this.log.debug('alarm is closed');
+						await this.resetAlarmStates();
+						this.log.debug('alarm is closed - alarm states reset');
 						internalAlarmData.alarmClosed = alarmContent.closed;
 					}
 				} else if (content.success) {
 					// API call succeeded but there is no active (non-archived) alarm -> clear a previously set alarm (see upstream PR #22)
 					if (internalAlarmData.alarmID !== 0) {
-						this.setState('alarm', { val: false, ack: true });
+						await this.resetAlarmStates();
 						internalAlarmData.alarmID = 0;
 						internalAlarmData.alarmClosed = true;
-						this.log.debug('alarm list is empty - alarm cleared');
+						this.log.debug('alarm list is empty - alarm states reset');
 					}
 				} else {
 					this.log.warn('api content retrieval not successful');
@@ -604,6 +602,19 @@ class Divera247 extends utils.Adapter {
 			}
 		}
 		this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
+	}
+
+	/**
+	 *	Reset all alarm related states to their defaults (booleans to false, the rest to null).
+	 *	Called at startup and whenever there is no active alarm anymore. lastUpdate is kept.
+	 */
+	async resetAlarmStates() {
+		for (const elm of dataPoints) {
+			if (elm.id === 'lastUpdate') {
+				continue;
+			}
+			await this.setState(elm.id, { val: (elm.type === 'boolean') ? false : null, ack: true });
+		}
 	}
 
 	/**
