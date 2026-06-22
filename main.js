@@ -6,6 +6,7 @@ const adapterName = require('./package.json').name.split('.').pop();
 
 const userData = {
 	diveraAPIToken: '',
+	/** @type {any[]} */
 	diveraMemberships: [],
 };
 
@@ -140,6 +141,7 @@ class Divera247 extends utils.Adapter {
 		});
 
 		this.refreshStateTimeout = null;
+		this.availabilityWarned = false;
 
 		this.on('ready', this.onReady.bind(this));
 		this.on('unload', this.onUnload.bind(this));
@@ -277,12 +279,14 @@ class Divera247 extends utils.Adapter {
 	 * @param {string[]} diveraUserGroups
 	 */
 	async getDataFromApiAndSetObjects(diveraAccessKey, diveraFilterOnlyAlarmsForMyUser, diveraUserIDs, diveraUserGroups) {
-		// Calling the alerting-server api
+		// Calling the pull/all endpoint - it works for all Divera versions (incl. FREE) and
+		// returns alarms (data.alarm), the unit data and the monitor in a single request.
+		// The dedicated /api/v2/alarms (CRUD) endpoint is forbidden (403) for FREE accounts.
 		// @ts-ignore
 		await axios({
 			method: 'get',
 			baseURL: 'https://www.divera247.com/',
-			url: '/api/v2/alarms?accesskey=' + diveraAccessKey,
+			url: '/api/v2/pull/all?accesskey=' + diveraAccessKey,
 			responseType: 'json'
 		}).then(
 			(response) => {
@@ -302,10 +306,11 @@ class Divera247 extends utils.Adapter {
 				this.setState('lastUpdate', { val: Date.now(), ack: true });
 
 				// Setting the alarm specific states when a new alarm is active and addressed to the configured divera user id
-				if (content.success && content.data && content.data.items && Array.isArray(content.data.sorting) && content.data.sorting.length > 0) {
+				const alarmRoot = (content.data && content.data.alarm) ? content.data.alarm : null;
+				if (content.success && alarmRoot && alarmRoot.items && Array.isArray(alarmRoot.sorting) && alarmRoot.sorting.length > 0) {
 					// 'sorting' is ascending (oldest first), so the most recent alarm is the last entry
-					const latestAlarmId = content.data.sorting[content.data.sorting.length - 1];
-					const alarmContent = content.data.items[latestAlarmId];
+					const latestAlarmId = alarmRoot.sorting[alarmRoot.sorting.length - 1];
+					const alarmContent = alarmRoot.items[latestAlarmId];
 					if (!alarmContent) {
 						this.log.debug('No alarm content found for latest alarm id ' + latestAlarmId);
 						return;
@@ -382,7 +387,7 @@ class Divera247 extends utils.Adapter {
 				if (error.response) {
 					// The request was made and the server responded with a error status code
 					if (error.response.status == 403) {
-						this.log.error('Login not possible');
+						this.log.error('API request forbidden (403) - the accesskey is missing the required permission for this endpoint');
 						this.setState('info.connection', false, true);
 					} else {
 						this.log.warn('received error ' + error.response.status + ' response with content: ' + JSON.stringify(error.response.data));
@@ -399,6 +404,11 @@ class Divera247 extends utils.Adapter {
 				}
 			}
 		);
+
+		// Optional: evaluate the personnel availability (monitor data) into the availability.* tree
+		if (this.config.enableAvailability) {
+			await this.updateAvailability(diveraAccessKey);
+		}
 
 		// Timeout and self call handling
 		this.refreshStateTimeout = this.refreshStateTimeout || setTimeout(() => {
@@ -430,6 +440,167 @@ class Divera247 extends utils.Adapter {
 		this.setState('addressed_groups', { val: addressedGroups.join(), ack: true });
 		this.setState('addressed_vehicle', { val: addressedVehicles.join(), ack: true });
 		this.setState('alarm', { val: true, ack: true });
+	}
+
+	/**
+	 *	Sanitize a free text into a valid ioBroker object-id part (ascii word characters only)
+	 *
+	 * @param {string} text
+	 */
+	sanitizeId(text) {
+		return String(text || '')
+			.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+			.replace(/Ä/g, 'Ae').replace(/Ö/g, 'Oe').replace(/Ü/g, 'Ue')
+			.replace(/[^A-Za-z0-9_]/g, '_')
+			.replace(/_+/g, '_')
+			.replace(/^_+|_+$/g, '');
+	}
+
+	/**
+	 *	Find the monitor representation that holds the current status per member (keyed by ucr-id)
+	 *
+	 * @param {Record<string, any>} monitor
+	 * @param {Record<string, any>} consumer
+	 */
+	extractMemberStatusMap(monitor, consumer) {
+		const consumerIds = Object.keys(consumer || {}).map((k) => parseInt(k, 10));
+		for (const key of Object.keys(monitor || {})) {
+			const rep = monitor[key];
+			if (rep && typeof rep === 'object' && !Array.isArray(rep)) {
+				const sampleKey = Object.keys(rep)[0];
+				const sample = sampleKey !== undefined ? rep[sampleKey] : undefined;
+				if (sample && typeof sample === 'object' && typeof sample.status === 'number' &&
+					consumerIds.includes(parseInt(sampleKey, 10))) {
+					return rep;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 *	Resolve the user input (qualification id, shortname or name, comma separated) against the cluster qualifications
+	 *
+	 * @param {string} input
+	 * @param {Record<string, any>} qualDefs
+	 */
+	resolveQualifications(input, qualDefs) {
+		const tokens = String(input || '').split(',').map((s) => s.trim()).filter(Boolean);
+		const result = [];
+		for (const token of tokens) {
+			const tl = token.toLowerCase();
+			let matched = false;
+			for (const id of Object.keys(qualDefs || {})) {
+				const q = qualDefs[id];
+				if (id === token || (q.shortname && q.shortname.toLowerCase() === tl) || (q.name && q.name.toLowerCase() === tl)) {
+					const numId = parseInt(id, 10);
+					if (!result.find((r) => r.id === numId)) {
+						const key = this.sanitizeId(q.shortname || q.name) || ('q' + id);
+						result.push({ id: numId, key: key, name: q.name || q.shortname || ('Qualifikation ' + id) });
+					}
+					matched = true;
+					break;
+				}
+			}
+			if (!matched) {
+				this.log.warn('availability: qualification \'' + token + '\' not found in Divera cluster - ignored');
+			}
+		}
+		return result;
+	}
+
+	/**
+	 *	Fetch the unit data and count members per status and selected qualification into the availability.* tree
+	 *
+	 * @param {string} diveraAccessKey
+	 */
+	async updateAvailability(diveraAccessKey) {
+		// @ts-ignore
+		await axios({
+			method: 'get',
+			baseURL: 'https://www.divera247.com/',
+			url: '/api/v2/pull/all?accesskey=' + diveraAccessKey,
+			responseType: 'json'
+		}).then(async (response) => {
+			const content = response.data;
+			if (!content || !content.success || !content.data) {
+				this.log.warn('availability: pull/all response not successful');
+				return;
+			}
+			const cluster = content.data.cluster || {};
+			const statuses = cluster.status || {};
+			const statusSorting = (Array.isArray(cluster.statussorting) && cluster.statussorting.length) ? cluster.statussorting : Object.keys(statuses);
+			const qualDefs = cluster.qualification || {};
+			const consumer = cluster.consumer || {};
+
+			const memberStatus = this.extractMemberStatusMap(content.data.monitor, consumer);
+			if (!memberStatus) {
+				if (!this.availabilityWarned) {
+					this.log.warn('availability: no per-member monitor data available - does the used accesskey have monitor/management rights?');
+					this.availabilityWarned = true;
+				}
+				return;
+			}
+			this.availabilityWarned = false;
+
+			const selected = this.resolveQualifications(this.config.availabilityQualifications, qualDefs);
+
+			// Count members per status (.all) and per selected qualification
+			const counts = {};
+			for (const sid of Object.keys(statuses)) {
+				counts[sid] = { all: 0, quals: {} };
+				for (const sel of selected) counts[sid].quals[sel.id] = 0;
+			}
+			for (const mid of Object.keys(consumer)) {
+				const entry = memberStatus[mid];
+				const st = entry && entry.status;
+				if (st == null || !counts[st]) continue;
+				counts[st].all++;
+				const memberQuals = consumer[mid].qualifications || [];
+				for (const sel of selected) {
+					if (memberQuals.includes(sel.id)) counts[st].quals[sel.id]++;
+				}
+			}
+
+			// Create / update the objects
+			await this.setObjectNotExistsAsync('availability', {
+				type: 'channel',
+				common: { name: 'Personalverfügbarkeit' },
+				native: {}
+			});
+			for (const sid of statusSorting) {
+				const st = statuses[sid];
+				if (!st) continue;
+				const sKey = this.sanitizeId(st.name) || ('status_' + sid);
+				const base = 'availability.' + sKey;
+				await this.setObjectNotExistsAsync(base, {
+					type: 'channel',
+					common: { name: st.name },
+					native: {}
+				});
+				await this.setObjectNotExistsAsync(base + '.all', {
+					type: 'state',
+					common: { name: 'Gesamt (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
+					native: {}
+				});
+				this.setState(base + '.all', { val: counts[sid].all, ack: true });
+				for (const sel of selected) {
+					await this.setObjectNotExistsAsync(base + '.' + sel.key, {
+						type: 'state',
+						common: { name: sel.name + ' (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
+						native: {}
+					});
+					this.setState(base + '.' + sel.key, { val: counts[sid].quals[sel.id], ack: true });
+				}
+			}
+			this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
+		}).catch((error) => {
+			if (error.response) {
+				this.log.warn('availability: received error ' + error.response.status + ' from pull/all');
+			} else {
+				this.log.warn('availability: ' + error.message);
+			}
+		});
 	}
 
 	// Is called when adapter shuts down

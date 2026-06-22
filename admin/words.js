@@ -121,5 +121,25 @@ systemDictionary = {
 		"es": "Alarma solo para los siguientes grupos de alarmas de Divera",
 		"pl": "Alarm tylko dla następujących grup alarmowych Divera",
 		"zh-cn": "仅针对以下Divera警报组发出警报"
+	},
+	"Personnel availability": {
+		"en": "Personnel availability",
+		"de": "Personalverfügbarkeit"
+	},
+	"Evaluate personnel availability": {
+		"en": "Evaluate personnel availability",
+		"de": "Personalverfügbarkeit auswerten"
+	},
+	"Counts members per status and qualification (requires an accesskey with monitor rights)": {
+		"en": "Counts members per status and qualification (requires an accesskey with monitor rights)",
+		"de": "Zählt Mitglieder je Status und Qualifikation (benötigt einen Accesskey mit Monitor-Rechten)"
+	},
+	"Qualifications": {
+		"en": "Qualifications",
+		"de": "Qualifikationen"
+	},
+	"Qualifications to evaluate (ID, abbreviation or name, comma separated, e.g. GF, MA, Atemschutz)": {
+		"en": "Qualifications to evaluate (ID, abbreviation or name, comma separated, e.g. GF, MA, Atemschutz)",
+		"de": "Auszuwertende Qualifikationen (ID, Kürzel oder Name, kommagetrennt, z. B. GF, MA, Atemschutz)"
 	}
 };

@@ -109,7 +109,24 @@
 				<span id="diveraAlarmGroupInformationForAllAlarms" class="translate">(leave blank to subscribe all alarms)</span>
 			</div>
 		</div>
-	</div>
+
+		<div class="row">
+			<h4 class="translate">Personnel availability</h4>
+		</div>
+		<div class="row">
+			<div class="col s12 input-field">
+				<input type="checkbox" class="value" id="enableAvailability" />
+				<label for="enableAvailability" class="translate">Evaluate personnel availability</label><br>
+				<span id="enableAvailabilityInformation" class="translate">Counts members per status and qualification (requires an accesskey with monitor rights)</span>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col s8 input-field">
+				<input type="text" class="value" id="availabilityQualifications" />
+				<label for="availabilityQualifications" class="translate">Qualifications</label>
+				<span id="availabilityQualificationsInformation" class="translate">Qualifications to evaluate (ID, abbreviation or name, comma separated, e.g. GF, MA, Atemschutz)</span>
+			</div>
+		</div>
 	</div>
 </body>
 

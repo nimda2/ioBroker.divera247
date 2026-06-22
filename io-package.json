@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "Alarms are now read from /api/v2/pull/all (fixes 403 'Login not possible' on FREE accounts); added optional personnel availability evaluation (availability.*)",
+        "de": "Alarme werden jetzt über /api/v2/pull/all gelesen (behebt 403 'Login not possible' bei FREE-Konten); optionale Personalverfügbarkeit (availability.*) hinzugefügt"
+      },
       "0.2.1": {
         "en": "Fixed login config, corrected API field 'ucr_adressed', latest alarm selection and several crashes",
         "de": "Login-Konfiguration repariert, API-Feld 'ucr_adressed' korrigiert, Auswahl des aktuellsten Alarms und mehrere Abstürze behoben"
@@ -113,7 +117,9 @@
     "diveraLoginPassword": "",
     "explizitUserAlarms": false,
     "diveraUserId": "",
-    "diveraAlarmGroup": ""
+    "diveraAlarmGroup": "",
+    "enableAvailability": false,
+    "availabilityQualifications": ""
   },
   "encryptedNative": [
     "diveraLoginPassword"
