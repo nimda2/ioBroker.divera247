@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "news": {
+      "0.3.4": {
+        "en": "Added alarm response counts (responses.*): how many members chose each status during an active alarm, plus total answered and recipients",
+        "de": "Alarm-Rückmeldungen (responses.*) hinzugefügt: wie viele Mitglieder bei einem aktiven Alarm welchen Status gewählt haben, plus Gesamt und Empfänger"
+      },
       "0.3.3": {
         "en": "States are initialised at startup so they are never null (alarm/priority default to false), restoring the 0.1.2 startup behaviour",
         "de": "States werden beim Start initialisiert und sind nie mehr null (alarm/priority = false), wie in 0.1.2"
@@ -78,10 +82,6 @@
       "0.0.2": {
         "en": "adjusted translation",
         "de": "Übersetzung verbessert"
-      },
-      "0.0.1": {
-        "en": "initial release",
-        "de": "Erstveröffentlichung"
       }
     },
     "title": "Divera 24/7",

@@ -399,6 +399,11 @@ class Divera247 extends utils.Adapter {
 				if (content.success && this.config.enableAvailability) {
 					await this.processAvailability(content.data);
 				}
+
+				// Update the alarm response counts (who answered with which status) every poll
+				if (content.success) {
+					await this.processAlarmResponses(content.data && content.data.alarm, content.data && content.data.cluster);
+				}
 			}
 		).catch(
 			(error) => {
@@ -599,6 +604,67 @@ class Divera247 extends utils.Adapter {
 			}
 		}
 		this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
+	}
+
+	/**
+	 *	Count the alarm responses (how many members chose each status) into the responses.* tree.
+	 *	Uses ucr_answeredcount of the current (non-closed) alarm; clears to 0 when no alarm is active.
+	 *
+	 * @param {object} alarmRoot data.alarm of the pull/all response
+	 * @param {object} cluster   data.cluster of the pull/all response
+	 */
+	async processAlarmResponses(alarmRoot, cluster) {
+		cluster = cluster || {};
+		const statuses = cluster.status || {};
+		const statusSorting = (Array.isArray(cluster.statussorting) && cluster.statussorting.length) ? cluster.statussorting : Object.keys(statuses);
+		if (!Object.keys(statuses).length) {
+			return;
+		}
+
+		// Determine the current active (non-closed) alarm and its per-status answer counts
+		let answeredCount = {};
+		let recipients = 0;
+		if (alarmRoot && alarmRoot.items && Array.isArray(alarmRoot.sorting) && alarmRoot.sorting.length > 0) {
+			const current = alarmRoot.items[alarmRoot.sorting[alarmRoot.sorting.length - 1]];
+			if (current && !current.closed) {
+				answeredCount = current.ucr_answeredcount || {};
+				recipients = Number(current.count_recipients) || 0;
+			}
+		}
+
+		await this.setObjectNotExistsAsync('responses', {
+			type: 'channel',
+			common: { name: 'Alarm-Rückmeldungen' },
+			native: {}
+		});
+		let totalAnswered = 0;
+		for (const sid of statusSorting) {
+			const st = statuses[sid];
+			if (!st) {
+				continue;
+			}
+			const key = this.sanitizeId(st.name) || ('status_' + sid);
+			const cnt = Number(answeredCount[sid]) || 0;
+			totalAnswered += cnt;
+			await this.setObjectNotExistsAsync('responses.' + key, {
+				type: 'state',
+				common: { name: 'Rückmeldungen ' + st.name, type: 'number', role: 'value', read: true, write: false },
+				native: {}
+			});
+			this.setState('responses.' + key, { val: cnt, ack: true });
+		}
+		await this.setObjectNotExistsAsync('responses.answered_total', {
+			type: 'state',
+			common: { name: 'Rückmeldungen gesamt', type: 'number', role: 'value', read: true, write: false },
+			native: {}
+		});
+		this.setState('responses.answered_total', { val: totalAnswered, ack: true });
+		await this.setObjectNotExistsAsync('responses.recipients', {
+			type: 'state',
+			common: { name: 'Empfänger', type: 'number', role: 'value', read: true, write: false },
+			native: {}
+		});
+		this.setState('responses.recipients', { val: recipients, ack: true });
 	}
 
 	// Is called when adapter shuts down
