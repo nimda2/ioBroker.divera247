@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.5",
+    "version": "0.3.6",
     "news": {
+      "0.3.6": {
+        "en": "The alarm data point reset on alarm end is now optional (new setting, off by default), like the personnel availability",
+        "de": "Das Zurücksetzen der Alarm-Datenpunkte beim Alarmende ist jetzt optional (neue Einstellung, standardmäßig aus), wie die Personalverfügbarkeit"
+      },
       "0.3.5": {
         "en": "When there is no active alarm anymore, all alarm data points are reset (booleans to false, the rest to null), not only the alarm flag",
         "de": "Wenn kein Alarm mehr aktiv ist, werden alle Alarm-Datenpunkte zurückgesetzt (Booleans auf false, der Rest auf null), nicht nur das Alarm-Flag"
@@ -78,10 +82,6 @@
       "0.0.4": {
         "en": "Connection check to api improved, added timestamp of latest alert",
         "de": "API-Verbindungs-Check verbesserunt, Alarmieringszeitstempel hinzugefügt"
-      },
-      "0.0.3": {
-        "en": "added title, text, address, latitude, longitude, general formatting",
-        "de": "Einsatzstichwort, Meldungstext, Adresse, Längengrad und Breitengrad hinzugefügt"
       }
     },
     "title": "Divera 24/7",
@@ -133,6 +133,7 @@
     "diveraUserId": "",
     "diveraAlarmGroup": "",
     "pollInterval": 30,
+    "resetOnAlarmEnd": false,
     "enableAvailability": false,
     "availabilityQualifications": ""
   },

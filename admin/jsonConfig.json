@@ -56,6 +56,13 @@
 					"label": { "en": "Divera alarm groups", "de": "Divera Alarm-Gruppen" },
 					"help": { "en": "Comma separated group IDs", "de": "Kommagetrennte Gruppen-IDs" },
 					"sm": 12, "md": 6
+				},
+				"resetOnAlarmEnd": {
+					"type": "checkbox",
+					"newLine": true,
+					"label": { "en": "Reset alarm data points when the alarm ends", "de": "Alarm-Datenpunkte beim Alarmende zurücksetzen" },
+					"help": { "en": "When no alarm is active, also reset title/text/address/... to empty (not only the alarm flag)", "de": "Wenn kein Alarm aktiv ist, auch Stichwort/Text/Adresse/... leeren (nicht nur das Alarm-Flag)" },
+					"sm": 12
 				}
 			}
 		},

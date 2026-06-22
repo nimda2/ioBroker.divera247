@@ -377,17 +377,27 @@ class Divera247 extends utils.Adapter {
 							this.log.debug('states refreshed for the current alarm');
 						}
 					} else if (internalAlarmData.alarmID == alarmContent.id && alarmContent.closed && !internalAlarmData.alarmClosed) {
-						await this.resetAlarmStates();
-						this.log.debug('alarm is closed - alarm states reset');
+						if (this.config.resetOnAlarmEnd) {
+							await this.resetAlarmStates();
+							this.log.debug('alarm is closed - alarm states reset');
+						} else {
+							this.setState('alarm', { val: false, ack: true });
+							this.log.debug('alarm is closed');
+						}
 						internalAlarmData.alarmClosed = alarmContent.closed;
 					}
 				} else if (content.success) {
 					// API call succeeded but there is no active (non-archived) alarm -> clear a previously set alarm (see upstream PR #22)
 					if (internalAlarmData.alarmID !== 0) {
-						await this.resetAlarmStates();
+						if (this.config.resetOnAlarmEnd) {
+							await this.resetAlarmStates();
+							this.log.debug('alarm list is empty - alarm states reset');
+						} else {
+							this.setState('alarm', { val: false, ack: true });
+							this.log.debug('alarm list is empty - alarm cleared');
+						}
 						internalAlarmData.alarmID = 0;
 						internalAlarmData.alarmClosed = true;
-						this.log.debug('alarm list is empty - alarm states reset');
 					}
 				} else {
 					this.log.warn('api content retrieval not successful');
