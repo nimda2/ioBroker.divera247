@@ -1,0 +1,82 @@
+{
+	"i18n": false,
+	"type": "tabs",
+	"items": {
+		"tabConnection": {
+			"type": "panel",
+			"label": { "en": "Connection", "de": "Verbindung" },
+			"items": {
+				"diveraUserLogin": {
+					"type": "text",
+					"label": { "en": "Email address", "de": "E-Mail-Adresse" },
+					"sm": 12, "md": 6, "lg": 6
+				},
+				"diveraLoginPassword": {
+					"type": "password",
+					"repeat": false,
+					"label": { "en": "Divera login password", "de": "Divera Login-Passwort" },
+					"sm": 12, "md": 6, "lg": 6
+				},
+				"pollInterval": {
+					"type": "number",
+					"min": 10,
+					"default": 30,
+					"label": { "en": "Poll interval (seconds)", "de": "Abfrageintervall (Sekunden)" },
+					"help": { "en": "How often the Divera API is queried (minimum 10 seconds)", "de": "Wie oft die Divera-API abgefragt wird (mindestens 10 Sekunden)" },
+					"sm": 12, "md": 4, "lg": 4
+				}
+			}
+		},
+		"tabFilter": {
+			"type": "panel",
+			"label": { "en": "Filter", "de": "Filter" },
+			"items": {
+				"explizitUserAlarms": {
+					"type": "checkbox",
+					"label": { "en": "Show only alarms for my user", "de": "Nur Alarme für meinen Benutzer anzeigen" },
+					"help": { "en": "Alarm triggers only if my user is addressed in the alarming", "de": "Alarm wird nur ausgelöst, wenn mein Benutzer in der Alarmierung adressiert ist" },
+					"sm": 12
+				},
+				"_filterHint": {
+					"type": "staticText",
+					"hidden": "!!data.explizitUserAlarms",
+					"text": { "en": "Optional: restrict alarms to specific user IDs and/or alarm groups (leave blank to subscribe all alarms).", "de": "Optional: Alarme auf bestimmte Benutzer-IDs und/oder Alarm-Gruppen einschränken (leer lassen, um alle Alarme zu erhalten)." },
+					"sm": 12
+				},
+				"diveraUserId": {
+					"type": "text",
+					"hidden": "!!data.explizitUserAlarms",
+					"label": { "en": "Divera user IDs", "de": "Divera Benutzer-IDs" },
+					"help": { "en": "Comma separated, e.g. 12345, 67890", "de": "Kommagetrennt, z. B. 12345, 67890" },
+					"sm": 12, "md": 6
+				},
+				"diveraAlarmGroup": {
+					"type": "text",
+					"hidden": "!!data.explizitUserAlarms",
+					"label": { "en": "Divera alarm groups", "de": "Divera Alarm-Gruppen" },
+					"help": { "en": "Comma separated group IDs", "de": "Kommagetrennte Gruppen-IDs" },
+					"sm": 12, "md": 6
+				}
+			}
+		},
+		"tabAvailability": {
+			"type": "panel",
+			"label": { "en": "Personnel availability", "de": "Personalverfügbarkeit" },
+			"items": {
+				"enableAvailability": {
+					"type": "checkbox",
+					"label": { "en": "Evaluate personnel availability", "de": "Personalverfügbarkeit auswerten" },
+					"help": { "en": "Counts members per status and qualification (requires an accesskey with monitor rights)", "de": "Zählt Mitglieder je Status und Qualifikation (benötigt einen Accesskey mit Monitor-Rechten)" },
+					"sm": 12
+				},
+				"availabilityQualifications": {
+					"type": "text",
+					"hidden": "!data.enableAvailability",
+					"label": { "en": "Qualifications", "de": "Qualifikationen" },
+					"help": { "en": "Qualifications to evaluate (ID, abbreviation or name, comma separated, e.g. GF, MA, Atemschutz)", "de": "Auszuwertende Qualifikationen (ID, Kürzel oder Name, kommagetrennt, z. B. GF, MA, Atemschutz)" },
+					"sm": 12, "md": 8
+				}
+			}
+		}
+	}
+}

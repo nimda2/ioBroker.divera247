@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "news": {
+      "0.3.2": {
+        "en": "Reworked the admin settings to the modern JSON config UI (tabs Connection/Filter/Availability, responsive, conditional fields)",
+        "de": "Admin-Einstellungen auf die moderne JSON-Config-Oberfläche umgestellt (Reiter Verbindung/Filter/Verfügbarkeit, responsiv, bedingte Felder)"
+      },
       "0.3.1": {
         "en": "Personnel availability now uses the same single pull/all request as the alarms; the poll interval (seconds) is configurable again like in 0.1.2",
         "de": "Personalverfügbarkeit nutzt jetzt denselben einzelnen pull/all-Abruf wie die Alarme; das Abfrageintervall (Sekunden) ist wieder konfigurierbar wie in 0.1.2"
@@ -109,7 +113,9 @@
     "compact": true,
     "connectionType": "cloud",
     "dataSource": "poll",
-    "materialize": true,
+    "adminUI": {
+      "config": "json"
+    },
     "dependencies": [
       {
         "js-controller": ">=3.0.0"
