@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "news": {
+      "0.3.3": {
+        "en": "States are initialised at startup so they are never null (alarm/priority default to false), restoring the 0.1.2 startup behaviour",
+        "de": "States werden beim Start initialisiert und sind nie mehr null (alarm/priority = false), wie in 0.1.2"
+      },
       "0.3.2": {
         "en": "Reworked the admin settings to the modern JSON config UI (tabs Connection/Filter/Availability, responsive, conditional fields)",
         "de": "Admin-Einstellungen auf die moderne JSON-Config-Oberfläche umgestellt (Reiter Verbindung/Filter/Verfügbarkeit, responsiv, bedingte Felder)"

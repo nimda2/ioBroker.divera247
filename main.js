@@ -166,6 +166,11 @@ class Divera247 extends utils.Adapter {
 			});
 		}
 
+		// Initialise the states at startup so they are never null (booleans default to false), like in 0.1.2
+		for (const elm of dataPoints) {
+			await this.setState(elm.id, { val: (elm.type === 'boolean') ? false : null, ack: true });
+		}
+
 		////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		const diveraLoginName = this.config.diveraUserLogin;
 		const diveraLoginPassword = this.config.diveraLoginPassword;
