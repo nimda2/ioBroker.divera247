@@ -365,6 +365,16 @@ class Divera247 extends utils.Adapter {
 						this.log.debug('alarm is closed');
 						internalAlarmData.alarmClosed = alarmContent.closed;
 					}
+				} else if (content.success) {
+					// API call succeeded but there is no active (non-archived) alarm -> clear a previously set alarm (see upstream PR #22)
+					if (internalAlarmData.alarmID !== 0) {
+						this.setState('alarm', { val: false, ack: true });
+						internalAlarmData.alarmID = 0;
+						internalAlarmData.alarmClosed = true;
+						this.log.debug('alarm list is empty - alarm cleared');
+					}
+				} else {
+					this.log.warn('api content retrieval not successful');
 				}
 			}
 		).catch(
