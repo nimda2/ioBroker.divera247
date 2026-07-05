@@ -238,6 +238,7 @@ class Divera247 extends utils.Adapter {
 			method: 'post',
 			baseURL: 'https://www.divera247.com/',
 			url: '/api/v2/auth/login',
+			timeout: 15000,
 			data: {
 				Login: {
 					username: diveraLoginName,
@@ -298,6 +299,7 @@ class Divera247 extends utils.Adapter {
 			method: 'get',
 			baseURL: 'https://www.divera247.com/',
 			url: '/api/v2/pull/all?accesskey=' + diveraAccessKey,
+			timeout: 15000,
 			responseType: 'json'
 		}).then(
 			async (response) => {
@@ -324,62 +326,63 @@ class Divera247 extends utils.Adapter {
 					const alarmContent = alarmRoot.items[latestAlarmId];
 					if (!alarmContent) {
 						this.log.debug('No alarm content found for latest alarm id ' + latestAlarmId);
-						return;
-					}
+					} else {
 					// The Divera v2 API spells the field 'ucr_adressed' (single 'd'); older v1 endpoints used 'ucr_addressed'
-					const alarmAddressedUsers = alarmContent.ucr_addressed || alarmContent.ucr_adressed || [];
-					if ((internalAlarmData.alarmID != alarmContent.id && !alarmContent.closed) || (internalAlarmData.alarmID == alarmContent.id && internalAlarmData.lastAlarmUpdate < alarmContent.ts_update && !alarmContent.closed)) {
-						this.log.debug('New or updated alarm!');
-						this.log.debug('Received data from Divera-API: ' + JSON.stringify(content));
+						const alarmAddressedUsers = alarmContent.ucr_addressed || alarmContent.ucr_adressed || [];
+						if ((internalAlarmData.alarmID != alarmContent.id && !alarmContent.closed) || (internalAlarmData.alarmID == alarmContent.id && internalAlarmData.lastAlarmUpdate < alarmContent.ts_update && !alarmContent.closed)) {
+							this.log.debug('New or updated alarm!');
+							this.log.debug('Received data from Divera-API: ' + JSON.stringify(content));
 
-						// Setting internal variables for later checkes
-						internalAlarmData.alarmID = alarmContent.id;
-						internalAlarmData.alarmClosed = alarmContent.closed;
-						internalAlarmData.lastAlarmUpdate = alarmContent.ts_update;
+							// Setting internal variables for later checkes
+							internalAlarmData.alarmID = alarmContent.id;
+							internalAlarmData.alarmClosed = alarmContent.closed;
+							internalAlarmData.lastAlarmUpdate = alarmContent.ts_update;
 
-						// Checking UI Input filter and trigger update the states
-						if (diveraFilterOnlyAlarmsForMyUser) {
-							for (const elm of userData.diveraMemberships) {
-								this.log.debug('checking if my user-id \'' + elm.id + '\' for \'' + elm.name + '\' is alarmed');
-								if (alarmAddressedUsers.includes(parseInt(elm.id, 10))) {
-									this.setAdapterStates(alarmContent);
-									this.log.debug('my user is alarmed - states refreshed for the current alarm');
-									break;
-								} else {
-									this.log.debug('user is not alarmed');
+							// Checking UI Input filter and trigger update the states
+							if (diveraFilterOnlyAlarmsForMyUser) {
+								for (const elm of userData.diveraMemberships) {
+									this.log.debug('checking if my user-id \'' + elm.id + '\' for \'' + elm.name + '\' is alarmed');
+									if (alarmAddressedUsers.includes(parseInt(elm.id, 10))) {
+										this.setAdapterStates(alarmContent);
+										this.log.debug('my user is alarmed - states refreshed for the current alarm');
+										break;
+									} else {
+										this.log.debug('user is not alarmed');
+									}
 								}
-							}
-						} else if (diveraUserIDs.length > 0 && diveraUserIDs[0] != '') {
-							for (const elm of diveraUserIDs) {
-								this.log.debug('checking if user \'' + elm + '\' is alarmed');
-								if (alarmAddressedUsers.includes(parseInt(elm, 10))) {
-									this.setAdapterStates(alarmContent);
-									this.log.debug('user is alarmed - states refreshed for the current alarm');
-									break;
-								} else {
-									this.log.debug('user is not alarmed');
+							} else if (diveraUserIDs.length > 0 && diveraUserIDs[0] != '') {
+								for (const elm of diveraUserIDs) {
+									this.log.debug('checking if user \'' + elm + '\' is alarmed');
+									if (alarmAddressedUsers.includes(parseInt(elm, 10))) {
+										this.setAdapterStates(alarmContent);
+										this.log.debug('user is alarmed - states refreshed for the current alarm');
+										break;
+									} else {
+										this.log.debug('user is not alarmed');
+									}
 								}
-							}
-						} else if (diveraUserGroups.length > 0 && diveraUserGroups[0] != '') {
-							for (const elm of diveraUserGroups) {
-								this.log.debug('checking if group \'' + elm + '\' is alarmed');
-								if (Array.isArray(alarmContent.group) && alarmContent.group.includes(parseInt(elm, 10))) {
-									this.setAdapterStates(alarmContent);
-									this.log.debug('group is alarmed - states refreshed for the current alarm');
-									break;
-								} else {
-									this.log.debug('group is not alarmed');
+							} else if (diveraUserGroups.length > 0 && diveraUserGroups[0] != '') {
+								for (const elm of diveraUserGroups) {
+									this.log.debug('checking if group \'' + elm + '\' is alarmed');
+									if (Array.isArray(alarmContent.group) && alarmContent.group.includes(parseInt(elm, 10))) {
+										this.setAdapterStates(alarmContent);
+										this.log.debug('group is alarmed - states refreshed for the current alarm');
+										break;
+									} else {
+										this.log.debug('group is not alarmed');
+									}
 								}
+							} else {
+								this.log.debug('userID and group check skipped as of no userID or group is specified or my user was already alarmed');
+								this.setAdapterStates(alarmContent);
+								this.log.debug('states refreshed for the current alarm');
 							}
-						} else {
-							this.log.debug('userID and group check skipped as of no userID or group is specified or my user was already alarmed');
-							this.setAdapterStates(alarmContent);
-							this.log.debug('states refreshed for the current alarm');
+						} else if (alarmContent.closed && !internalAlarmData.alarmClosed) {
+							await this.resetAlarmStates();
+							this.log.debug('alarm is closed - alarm states reset');
+							internalAlarmData.alarmID = alarmContent.id;
+							internalAlarmData.alarmClosed = true;
 						}
-					} else if (internalAlarmData.alarmID == alarmContent.id && alarmContent.closed && !internalAlarmData.alarmClosed) {
-						await this.resetAlarmStates();
-						this.log.debug('alarm is closed - alarm states reset');
-						internalAlarmData.alarmClosed = alarmContent.closed;
 					}
 				} else if (content.success) {
 					// API call succeeded but there is no active (non-archived) alarm -> clear a previously set alarm (see upstream PR #22)

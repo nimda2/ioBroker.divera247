@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.7",
+    "version": "0.3.8",
     "news": {
+      "0.3.8": {
+        "en": "Robustness: 15s request timeout so a hanging API request can no longer stall the polling forever; alarm is also cleared when the latest alarm in the list is a different, already closed one; availability/responses are no longer skipped when the alarm content is missing; README rewritten",
+        "de": "Robustheit: 15s Request-Timeout, damit ein hängender API-Aufruf das Polling nicht mehr dauerhaft stoppen kann; Alarm wird auch zurückgesetzt, wenn der neueste Alarm in der Liste ein anderer, bereits geschlossener ist; Verfügbarkeit/Rückmeldungen werden bei fehlendem Alarm-Inhalt nicht mehr übersprungen; README überarbeitet"
+      },
       "0.3.7": {
         "en": "The alarm responses evaluation (responses.*) is now optional (new setting, off by default); the alarm data point reset on alarm end runs again always",
         "de": "Die Auswertung der Alarm-Rückmeldungen (responses.*) ist jetzt optional (neue Einstellung, standardmäßig aus); das Zurücksetzen der Alarm-Datenpunkte beim Alarmende läuft wieder immer"
@@ -78,10 +82,6 @@
       "0.0.6": {
         "en": "state handling while active alarm and connection check improved, fixed object types",
         "de": "state handling bei aktivem Alarm und connection check verbessert, Fehler bei Objekttypen behoben"
-      },
-      "0.0.5": {
-        "en": "fixed io-package news issue",
-        "de": "io-package news Anforderungen nachgepflegt"
       }
     },
     "title": "Divera 24/7",

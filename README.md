@@ -1,78 +1,78 @@
 ![Logo](admin/divera247_long.png)
 # ioBroker.divera247
 
-[![NPM version](http://img.shields.io/npm/v/iobroker.divera247.svg)](https://www.npmjs.com/package/iobroker.divera247)
-[![Downloads](https://img.shields.io/npm/dm/iobroker.divera247.svg)](https://www.npmjs.com/package/iobroker.divera247)
-![Number of Installations (latest)](http://iobroker.live/badges/divera247-installed.svg)
-![Number of Installations (stable)](http://iobroker.live/badges/divera247-stable.svg)
-[![Known Vulnerabilities](https://snyk.io/test/github/TKnpl/ioBroker.divera247/badge.svg)](https://snyk.io/test/github/TKnpl/ioBroker.divera247)
+**Gepflegter Fork** von [TKnpl/ioBroker.divera247](https://github.com/TKnpl/ioBroker.divera247) — repariert und erweitert, da 0.2.0 upstream nicht mehr funktionierte.
 
-[![NPM](https://nodei.co/npm/iobroker.divera247.png?downloads=true)](https://nodei.co/npm/iobroker.divera247/)
+Adapter für die Alarmierungssoftware <a href="https://www.divera247.com/" target="_blank">Divera 24/7</a>.
 
-**Tests:** ![Test and Release](https://github.com/TKnpl/ioBroker.divera247/workflows/Test%20and%20Release/badge.svg)
+## Funktioniert mit allen Divera-Versionen — auch FREE
+Die Alarme werden über den Endpunkt `/api/v2/pull/all` gelesen, der in **allen** Divera-Versionen (FREE, ALARM, PRO) erlaubt ist.
+Der von 0.2.0 genutzte Endpunkt `/api/v2/alarms` ist bei FREE-Konten gesperrt (403) und führte zum Fehler „Login not possible".
 
-## divera247 adapter for ioBroker
+## Installation
+Im ioBroker-Admin (Expertenmodus) als „Adapter aus eigener URL" installieren:
+```
+https://github.com/nimda2/ioBroker.divera247
+```
+Benötigt js-controller >= 3.0.0.
 
-Adapter for the alerting service <a href="https://www.divera247.com/" target="_blank">Divera 24/7</a>
+## Konfiguration
+Die Einstellungen sind in drei Reiter gegliedert (moderne JSON-Config-Oberfläche):
 
-## Requirements
-For full usability of this adapter your organisation has to subscribe the "Alarm" plan of Divera 24/7 services in minimum otherwise, the adapter will not work or will not work completely.
+### Verbindung
+- **E-Mail-Adresse / Passwort** — die Divera-24/7-Zugangsdaten. Das Passwort wird verschlüsselt gespeichert.
+  Empfehlung: einen eigenen System-/Monitor-Benutzer verwenden, keinen persönlichen Account.
+- **Abfrageintervall (Sekunden)** — wie oft die API abgefragt wird (Standard 30, Minimum 10).
 
-## Configuartion of this adapter
-You have to enter your "Divera 24/7" login crendentials to this adapter.
+### Filter
+- **Nur Alarme für meinen Benutzer** — Alarm wird nur ausgelöst, wenn der eingeloggte Benutzer adressiert ist.
+- **Divera Benutzer-IDs / Alarm-Gruppen** — Alarme optional auf bestimmte Benutzer oder Gruppen einschränken
+  (kommagetrennt; leer lassen = alle Alarme). Benutzer-IDs werden vor Gruppen geprüft.
+- **Alarm-Rückmeldungen auswerten** — zählt bei einem aktiven Alarm, wie viele Mitglieder welchen Status
+  gewählt haben (Datenpunkte `responses.*`, standardmäßig aus).
 
-Furthermore you can restrict the alarms on specific users or alarm groups.
-For this you have to enter the Divera user IDs or alarm group numbers into the admin page of this adapter. Several user IDs and / or alarm group numbers can be specifyed seperated by comma (,).
-This adapter checks first the userIDs befor it checks the groups. The first hit will trigger the alarm and update all states. A combination of userID and alarm group is currently not possible.
+### Personalverfügbarkeit
+- **Personalverfügbarkeit auswerten** — zählt Mitglieder je Status und ausgewählter Qualifikation aus den
+  Monitor-Daten (Datenpunkte `availability.*`, standardmäßig aus; benötigt einen Account mit Monitor-Rechten).
+- **Qualifikationen** — auszuwertende Qualifikationen als ID, Kürzel oder Name, kommagetrennt (z. B. `GF, MA, Atemschutz`).
 
-To subscribe **all alarms**, just leave the input fields empty.
+## Datenpunkte
+- `alarm` (bool), `title`, `text`, `foreign_id`, `divera_id`, `address`, `lat`, `lng`, `date`, `priority`,
+  `addressed_users`, `addressed_groups`, `addressed_vehicle`, `lastUpdate`
+- Beim Start und bei Alarmende werden alle Alarm-Datenpunkte zurückgesetzt (Booleans auf `false`, Rest auf `null`) — sie sind nie undefiniert.
+- `availability.<Status>.all` und `availability.<Status>.<Qualifikation>` — Anzahl je Status/Qualifikation (optional)
+- `responses.<Status>`, `responses.answered_total`, `responses.recipients` — Rückmeldungen zum aktiven Alarm (optional)
+
+Pro Abfrageintervall erfolgt genau **ein** API-Aufruf; Alarme, Verfügbarkeit und Rückmeldungen werden aus derselben Antwort ausgewertet.
 
 ## Changelog
 
-### 0.2.0
-* (TKnpl) complete renewal of the adapter
+### 0.3.8
+* (nimda2) Robustheit: 15s Request-Timeout (hängende API-Aufrufe können das Polling nicht mehr dauerhaft stoppen); Alarm wird auch zurückgesetzt, wenn der neueste Listeneintrag ein anderer, bereits geschlossener Alarm ist; Verfügbarkeit/Rückmeldungen laufen auch bei fehlendem Alarm-Inhalt; README überarbeitet
 
-### 0.1.3
-* (TKnpl) general revision of the adapter
+### 0.3.7
+* (nimda2) Alarm-Rückmeldungen (`responses.*`) optional per Einstellung; Zurücksetzen bei Alarmende läuft wieder immer
 
-### 0.1.2
-* (TKnpl) added alarmed vehicles datapoint
+### 0.3.5 / 0.3.4
+* (nimda2) Alle Alarm-Datenpunkte werden bei Alarmende zurückgesetzt; Alarm-Rückmeldungszähler je Status hinzugefügt
 
-### 0.1.1
-* (TKnpl) small changes - wording
+### 0.3.3
+* (nimda2) States werden beim Start initialisiert und sind nie mehr `null` (Verhalten wie 0.1.2)
 
-### 0.1.0
-* (TKnpl) added possibility to specify alarm groups
+### 0.3.2
+* (nimda2) Admin-Einstellungen auf JSON-Config umgestellt (Reiter, responsiv, bedingte Felder)
 
-### 0.0.10
-* (TKnpl) bug in info.connection fixed and handling of user ids expanded
+### 0.3.1
+* (nimda2) Verfügbarkeit nutzt denselben pull/all-Abruf wie die Alarme; Abfrageintervall wieder konfigurierbar
 
-### 0.0.9
-* (TKnpl) added default values for admin page
+### 0.3.0
+* (nimda2) Alarme über `/api/v2/pull/all` (behebt 403 „Login not possible" bei FREE-Konten); optionale Personalverfügbarkeit (`availability.*`)
 
-### 0.0.8
-* (TKnpl) Changed API call from intervall to timeout, added states 'group' and 'foreign_id'
+### 0.2.1
+* (nimda2) 0.2.0 repariert: Login-Konfiguration, API-Feld `ucr_adressed`, Auswahl des neuesten Alarms, diverse Abstürze
 
-### 0.0.7
-* (TKnpl) added object 'priority' and 'alarm' object updates only in case of an new alarm or when an alarm was closed
-
-### 0.0.6
-* (TKnpl) state handling while active alarm and connection check improved, fixed object types
-
-### 0.0.5
-* (TKnpl) fixed io-package news issue
-
-### 0.0.4
-* (TKnpl) Connection check to api improved, added timestamp of latest alert
-
-### 0.0.3
-* (TKnpl) added title, text, address, latitude, longitude, general formatting
-
-### 0.0.2
-* (TKnpl) adjusted translation
-
-### 0.0.1
-* (TKnpl) initial commit
+### 0.2.0 und älter
+* (TKnpl) siehe [Original-Repository](https://github.com/TKnpl/ioBroker.divera247)
 
 ## License
 MIT License
