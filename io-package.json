@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.3.8",
+    "version": "0.3.9",
     "news": {
+      "0.3.9": {
+        "en": "replace deprecated common.license/title/main with licenseInformation; require js-controller >=6.0.11",
+        "de": "veraltete common.license/title/main durch licenseInformation ersetzt; js-controller >=6.0.11 vorausgesetzt"
+      },
       "0.3.8": {
         "en": "Robustness: 15s request timeout so a hanging API request can no longer stall the polling forever; alarm is also cleared when the latest alarm in the list is a different, already closed one; availability/responses are no longer skipped when the alarm content is missing; README rewritten",
         "de": "Robustheit: 15s Request-Timeout, damit ein hängender API-Aufruf das Polling nicht mehr dauerhaft stoppen kann; Alarm wird auch zurückgesetzt, wenn der neueste Alarm in der Liste ein anderer, bereits geschlossener ist; Verfügbarkeit/Rückmeldungen werden bei fehlendem Alarm-Inhalt nicht mehr übersprungen; README überarbeitet"
@@ -74,17 +78,8 @@
       "0.0.8": {
         "en": "Changed API call from intervall to timeout, added states 'group' and 'foreign_id'",
         "de": "Apfrage der API von Intervall auf Timeout geändert, States 'Gruppe' und 'Einsatznummer' hinzugefügt"
-      },
-      "0.0.7": {
-        "en": "added object priority and alarm object updates only in case of an new alarm or when an alarm was closed",
-        "de": "Objekt Priorität/Sonderrechte hinzugefügt und Alarm wird nur noch bei neuem oder Schließung eines Alarms aktualisiert"
-      },
-      "0.0.6": {
-        "en": "state handling while active alarm and connection check improved, fixed object types",
-        "de": "state handling bei aktivem Alarm und connection check verbessert, Fehler bei Objekttypen behoben"
       }
     },
-    "title": "Divera 24/7",
     "titleLang": {
       "en": "Divera 24/7",
       "de": "Divera 24/7"
@@ -105,8 +100,11 @@
       "alarm"
     ],
     "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "platform": "Javascript/Node.js",
-    "main": "main.js",
     "icon": "divera247.png",
     "enabled": true,
     "extIcon": "https://raw.githubusercontent.com/TKnpl/ioBroker.divera247/master/admin/divera247.png",
@@ -122,7 +120,7 @@
     },
     "dependencies": [
       {
-        "js-controller": ">=3.0.0"
+        "js-controller": ">=6.0.11"
       }
     ]
   },
