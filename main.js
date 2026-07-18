@@ -447,19 +447,19 @@ class Divera247 extends utils.Adapter {
 		const addressedGroups = Array.isArray(alarmData.group) ? alarmData.group : [];
 		const addressedVehicles = Array.isArray(alarmData.vehicle) ? alarmData.vehicle : [];
 
-		this.setState('title', { val: alarmData.title, ack: true });
-		this.setState('text', { val: alarmData.text, ack: true });
-		this.setState('foreign_id', { val: Number(alarmData.foreign_id), ack: true });
-		this.setState('divera_id', { val: Number(alarmData.id), ack: true });
-		this.setState('address', { val: alarmData.address, ack: true });
-		this.setState('lat', { val: Number(alarmData.lat), ack: true });
-		this.setState('lng', { val: Number(alarmData.lng), ack: true });
-		this.setState('date', { val: Number(alarmData.date)*1000, ack: true });
-		this.setState('priority', { val: alarmData.priority, ack: true });
-		this.setState('addressed_users', { val: addressedUsers.join(), ack: true });
-		this.setState('addressed_groups', { val: addressedGroups.join(), ack: true });
-		this.setState('addressed_vehicle', { val: addressedVehicles.join(), ack: true });
-		this.setState('alarm', { val: true, ack: true });
+		this.setStateChangedAsync('title', { val: alarmData.title, ack: true });
+		this.setStateChangedAsync('text', { val: alarmData.text, ack: true });
+		this.setStateChangedAsync('foreign_id', { val: Number(alarmData.foreign_id), ack: true });
+		this.setStateChangedAsync('divera_id', { val: Number(alarmData.id), ack: true });
+		this.setStateChangedAsync('address', { val: alarmData.address, ack: true });
+		this.setStateChangedAsync('lat', { val: Number(alarmData.lat), ack: true });
+		this.setStateChangedAsync('lng', { val: Number(alarmData.lng), ack: true });
+		this.setStateChangedAsync('date', { val: Number(alarmData.date)*1000, ack: true });
+		this.setStateChangedAsync('priority', { val: alarmData.priority, ack: true });
+		this.setStateChangedAsync('addressed_users', { val: addressedUsers.join(), ack: true });
+		this.setStateChangedAsync('addressed_groups', { val: addressedGroups.join(), ack: true });
+		this.setStateChangedAsync('addressed_vehicle', { val: addressedVehicles.join(), ack: true });
+		this.setStateChangedAsync('alarm', { val: true, ack: true });
 	}
 
 	/**
@@ -594,14 +594,14 @@ class Divera247 extends utils.Adapter {
 				common: { name: 'Gesamt (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
 				native: {}
 			});
-			this.setState(base + '.all', { val: counts[sid].all, ack: true });
+			this.setStateChangedAsync(base + '.all', { val: counts[sid].all, ack: true });
 			for (const sel of selected) {
 				await this.setObjectNotExistsAsync(base + '.' + sel.key, {
 					type: 'state',
 					common: { name: sel.name + ' (' + st.name + ')', type: 'number', role: 'value', read: true, write: false },
 					native: {}
 				});
-				this.setState(base + '.' + sel.key, { val: counts[sid].quals[sel.id], ack: true });
+				this.setStateChangedAsync(base + '.' + sel.key, { val: counts[sid].quals[sel.id], ack: true });
 			}
 		}
 		this.log.debug('availability updated for ' + statusSorting.length + ' states and ' + selected.length + ' qualifications');
@@ -616,7 +616,7 @@ class Divera247 extends utils.Adapter {
 			if (elm.id === 'lastUpdate') {
 				continue;
 			}
-			await this.setState(elm.id, { val: (elm.type === 'boolean') ? false : null, ack: true });
+			await this.setStateChangedAsync(elm.id, { val: (elm.type === 'boolean') ? false : null, ack: true });
 		}
 	}
 
@@ -665,20 +665,20 @@ class Divera247 extends utils.Adapter {
 				common: { name: 'Rückmeldungen ' + st.name, type: 'number', role: 'value', read: true, write: false },
 				native: {}
 			});
-			this.setState('responses.' + key, { val: cnt, ack: true });
+			this.setStateChangedAsync('responses.' + key, { val: cnt, ack: true });
 		}
 		await this.setObjectNotExistsAsync('responses.answered_total', {
 			type: 'state',
 			common: { name: 'Rückmeldungen gesamt', type: 'number', role: 'value', read: true, write: false },
 			native: {}
 		});
-		this.setState('responses.answered_total', { val: totalAnswered, ack: true });
+		this.setStateChangedAsync('responses.answered_total', { val: totalAnswered, ack: true });
 		await this.setObjectNotExistsAsync('responses.recipients', {
 			type: 'state',
 			common: { name: 'Empfänger', type: 'number', role: 'value', read: true, write: false },
 			native: {}
 		});
-		this.setState('responses.recipients', { val: recipients, ack: true });
+		this.setStateChangedAsync('responses.recipients', { val: recipients, ack: true });
 	}
 
 	// Is called when adapter shuts down
