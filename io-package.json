@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "news": {
+      "0.4.2": {
+        "en": "An outdated or cached API response can no longer revive an alarm that is already over. The adapter now works with the most recent alarm that is really open, and only accepts a finished alarm again when Divera really updated it",
+        "de": "Eine veraltete oder gecachte API-Antwort kann einen bereits beendeten Alarm nicht mehr wiederbeleben. Der Adapter arbeitet jetzt mit dem neuesten wirklich offenen Alarm und akzeptiert einen beendeten Alarm nur wieder, wenn Divera ihn tatsächlich aktualisiert hat"
+      },
       "0.4.1": {
         "en": "No more phantom alarm after an adapter restart: the alarm tracking is restored from the states, so an alarm that is still open in Divera is no longer reported as a new one. New alarms are logged at info level with id, keyword and age",
         "de": "Kein Phantom-Alarm mehr nach einem Adapter-Neustart: die Alarm-Erkennung wird aus den States wiederhergestellt, ein in Divera noch offener Alarm wird dadurch nicht mehr als neuer Alarm gemeldet. Neue Alarme werden auf Info-Level mit ID, Stichwort und Alter geloggt"
@@ -78,10 +82,6 @@
       "0.0.10": {
         "en": "bug in info.connection fixed and handling of user ids expanded",
         "de": "Fehler in Verbindungsanzeige behoben und Handling von UserIDs erweitert"
-      },
-      "0.0.9": {
-        "en": "added default values for admin page",
-        "de": "Standardwerte für Admin-Seite hinzugefügt"
       }
     },
     "titleLang": {

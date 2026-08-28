@@ -47,6 +47,9 @@ Pro Abfrageintervall erfolgt genau **ein** API-Aufruf; Alarme, Verfügbarkeit un
 
 ## Changelog
 
+### 0.4.2
+* (nimda2) Eine veraltete oder gecachte API-Antwort kann einen bereits beendeten Alarm nicht mehr wiederbeleben (Divera antwortet bei Überlast aus dem Cache, erkennbar an `"cached": true`). Der Adapter sucht jetzt den neuesten wirklich offenen Alarm in der Liste statt blind den letzten Eintrag zu nehmen, und akzeptiert einen bereits beendeten Alarm nur dann wieder, wenn Divera ihn tatsächlich aktualisiert hat (neueres `ts_update`)
+
 ### 0.4.1
 * (nimda2) Kein Phantom-Alarm mehr nach einem Adapter-Neustart: Die Alarm-Erkennung lebte nur im Speicher und begann nach jedem Neustart wieder bei „kein Alarm bekannt". Ein in Divera noch offener Alarm (Alarme bleiben offen, bis sie geschlossen oder nach 48 h archiviert werden) wurde deshalb beim ersten Abruf als neuer Alarm erkannt und `alarm` auf `true` gesetzt. Die Erkennung wird jetzt aus den States wiederhergestellt. Neue Alarme werden auf Info-Level mit ID, Stichwort und Alter geloggt
 
