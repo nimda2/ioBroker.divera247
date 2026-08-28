@@ -166,8 +166,20 @@ class Divera247 extends utils.Adapter {
 			});
 		}
 
-		// Initialise the states at startup so they are never null (booleans default to false), like in 0.1.2
-		await this.resetAlarmStates();
+		// The alarm tracking only lives in memory, the states survive a restart. Restore it from
+		// them, otherwise an alarm that is still open in Divera (they stay open until closed or
+		// archived) would look brand new after every restart and be reported as a new alarm.
+		const knownAlarm = await this.getStateAsync('alarm');
+		const knownAlarmId = await this.getStateAsync('divera_id');
+		if (knownAlarm && knownAlarm.val === true && knownAlarmId && Number(knownAlarmId.val) > 0) {
+			internalAlarmData.alarmID = Number(knownAlarmId.val);
+			internalAlarmData.alarmClosed = false;
+			internalAlarmData.lastAlarmUpdate = 0;
+			this.log.info(`resuming alarm ${internalAlarmData.alarmID}, which was still active before the restart`);
+		} else {
+			// Initialise the states so they are never null (booleans default to false), like in 0.1.2
+			await this.resetAlarmStates();
+		}
 
 		////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		const diveraLoginName = this.config.diveraUserLogin;
@@ -329,8 +341,14 @@ class Divera247 extends utils.Adapter {
 					} else {
 					// The Divera v2 API spells the field 'ucr_adressed' (single 'd'); older v1 endpoints used 'ucr_addressed'
 						const alarmAddressedUsers = alarmContent.ucr_addressed || alarmContent.ucr_adressed || [];
-						if ((internalAlarmData.alarmID != alarmContent.id && !alarmContent.closed) || (internalAlarmData.alarmID == alarmContent.id && internalAlarmData.lastAlarmUpdate < alarmContent.ts_update && !alarmContent.closed)) {
-							this.log.debug('New or updated alarm!');
+						const isNewAlarm = internalAlarmData.alarmID != alarmContent.id;
+						if (!alarmContent.closed && (isNewAlarm || internalAlarmData.lastAlarmUpdate < alarmContent.ts_update)) {
+							if (isNewAlarm) {
+								const alarmAgeMinutes = alarmContent.date ? Math.round((Date.now() / 1000 - Number(alarmContent.date)) / 60) : -1;
+								this.log.info(`new alarm ${alarmContent.id} '${alarmContent.title}', alarm time ${alarmAgeMinutes} minutes ago`);
+							} else {
+								this.log.debug(`alarm ${alarmContent.id} was updated`);
+							}
 							this.log.debug('Received data from Divera-API: ' + JSON.stringify(content));
 
 							// Setting internal variables for later checkes

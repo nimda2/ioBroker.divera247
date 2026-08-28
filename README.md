@@ -47,6 +47,9 @@ Pro Abfrageintervall erfolgt genau **ein** API-Aufruf; Alarme, Verfügbarkeit un
 
 ## Changelog
 
+### 0.4.1
+* (nimda2) Kein Phantom-Alarm mehr nach einem Adapter-Neustart: Die Alarm-Erkennung lebte nur im Speicher und begann nach jedem Neustart wieder bei „kein Alarm bekannt". Ein in Divera noch offener Alarm (Alarme bleiben offen, bis sie geschlossen oder nach 48 h archiviert werden) wurde deshalb beim ersten Abruf als neuer Alarm erkannt und `alarm` auf `true` gesetzt. Die Erkennung wird jetzt aus den States wiederhergestellt. Neue Alarme werden auf Info-Level mit ID, Stichwort und Alter geloggt
+
 ### 0.4.0
 * (nimda2) States werden nur noch geschrieben, wenn sich ihr Wert wirklich ändert (`setStateChanged`). Behebt Mehrfach-Auslösungen in Skripten/Blockly bei „Auslösung durch egal": Jede Rückmeldung eines Mitglieds aktualisiert `ts_update` des Alarms, wodurch `alarm` bisher bei jedem Poll mit gleichem Wert neu geschrieben wurde (nur Zeitstempel, keine Wertänderung)
 

@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "divera247",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "news": {
+      "0.4.1": {
+        "en": "No more phantom alarm after an adapter restart: the alarm tracking is restored from the states, so an alarm that is still open in Divera is no longer reported as a new one. New alarms are logged at info level with id, keyword and age",
+        "de": "Kein Phantom-Alarm mehr nach einem Adapter-Neustart: die Alarm-Erkennung wird aus den States wiederhergestellt, ein in Divera noch offener Alarm wird dadurch nicht mehr als neuer Alarm gemeldet. Neue Alarme werden auf Info-Level mit ID, Stichwort und Alter geloggt"
+      },
       "0.4.0": {
         "en": "States are only written when their value actually changes (setStateChanged). Fixes repeated triggers in user scripts: every member response bumps the alarm's ts_update, which previously rewrote 'alarm' with the same value and updated its timestamp on every poll",
         "de": "States werden nur noch geschrieben, wenn sich ihr Wert wirklich ändert (setStateChanged). Behebt Mehrfach-Auslösungen in Nutzer-Skripten: jede Rückmeldung erhöht ts_update des Alarms, wodurch 'alarm' bisher bei jedem Poll mit gleichem Wert neu geschrieben und dessen Zeitstempel aktualisiert wurde"
@@ -78,10 +82,6 @@
       "0.0.9": {
         "en": "added default values for admin page",
         "de": "Standardwerte für Admin-Seite hinzugefügt"
-      },
-      "0.0.8": {
-        "en": "Changed API call from intervall to timeout, added states 'group' and 'foreign_id'",
-        "de": "Apfrage der API von Intervall auf Timeout geändert, States 'Gruppe' und 'Einsatznummer' hinzugefügt"
       }
     },
     "titleLang": {
